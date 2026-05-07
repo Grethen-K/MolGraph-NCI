@@ -1,32 +1,28 @@
 import sys
-import os
-import xyz2mol  # Импортируем скопированный файл
+from io_utils import load_radii
+from covalent_engine import get_covalent_skeleton
+from hb_detectors import apply_hb_rules
 
-def get_covalent_mol(xyz_file):
-    """
-    Блок 1: Преобразование XYZ в RDKit Mol объект (ковалентный остов).
-    """
-    try:
-        # Считываем атомы и координаты через встроенные средства xyz2mol
-        atoms, charge, coords = xyz2mol.read_xyz_file(xyz_file)
-        
-        # Получаем список молекул (RDKit объекты)
-        # Мы берем первую, так как работаем с кластером как единым целым для начала
-        mols = xyz2mol.xyz2mol(atoms, coords, charge=charge, use_graph=True)
-        
-        if not mols:
-            return None
-        return mols[0]
-    except Exception as e:
-        print(f"Ошибка при обработке {xyz_file}: {e}")
-        return None
+def main(xyz_file, rule='B'):
+    print(f"--- Запуск системы MolGraph-NCI (Правило {rule}) ---")
+    
+    # 1. Сварка остова
+    G, coords = get_covalent_skeleton(xyz_file)
+    if not G:
+        print("Pizdec! Остов не собрался.")
+        return
+
+    # 2. Поиск H-связей
+    atoms = [G.nodes[i]['element'] for i in range(len(G.nodes))]
+    h_bonds = apply_hb_rules(G, atoms, coords, rule=rule)
+    
+    print(f"Ковалентных связей: {G.number_of_edges()}")
+    print(f"Водородных связей найдено: {len(h_bonds)}")
+    
+    for hb in h_bonds:
+        print(f"  Связь: H({hb[0]})--A({hb[1]}) | d={hb[2]:.2f} A | Угол={hb[3]:.1f}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Использование: python main.py <file.xyz>")
-    else:
-        test_file = sys.argv[1]
-        mol = get_covalent_mol(test_file)
-        if mol:
-            print(f"Успешно! Атомов в остове: {mol.GetNumAtoms()}")
-            print(f"Связей в остове: {mol.GetNumBonds()}")
+    file = sys.argv[1] if len(sys.argv) > 1 else "water_dimer.xyz"
+    mode = sys.argv[2] if len(sys.argv) > 2 else "B"
+    main(file, mode)

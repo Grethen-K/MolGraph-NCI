@@ -14,7 +14,7 @@ def calculate_angle(p1, p2, p3):
 def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB'):
     """
     Ищем невалентные связи. 
-    Теперь с жестким отсечением лишних 'протечек' для одного водорода.
+    Теперь с жестким отсечением лишних для одного водорода.
     """
     all_found = []
     acceptor_list = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I']
@@ -48,7 +48,7 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB')
             vdw_sum = vdw_radii.get(atom, 1.2) + vdw_radii.get(a_atom, 1.5)
             
             if rule == 'A':
-                d_max = 3.3
+                d_max = 3.25
                 a_min = 0 
             elif rule == 'B':
                 d_max = vdw_sum
@@ -64,7 +64,7 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB')
                     # Собираем всё в кучу: (H_idx, A_idx, dist, angle, H_sym, A_sym)
                     all_found.append([i, a_idx, dist, angle, atom, a_atom])
     
-    # === ШАГ СОРТИРОВКИ И ФИЛЬТРАЦИИ (Твой новый запрос) ===
+    # === ШАГ СОРТИРОВКИ И ФИЛЬТРАЦИИ ===
     if not all_found:
         return []
 
@@ -82,15 +82,15 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB')
         # 2. Берем самую короткую связь как эталон
         min_dist = bonds[0][2]
         
-        # 3. Оставляем только те, что не длиннее эталона на 15%
-        # (Если d > min_dist * 1.15 — это уже не труба, а пиздец какой-то)
-        threshold = min_dist * 1.15
+        # 3. Оставляем только те, что не длиннее эталона на 10%
+        # (Если d > min_dist * 1.10 — это не бифуркатные)
+        threshold = min_dist * 1.10
         
         for b in bonds:
             if b[2] <= threshold:
                 final_filtered_hb.append(tuple(b))
             else:
-                # Всё, что дальше — игнорируем, как звонки от бывшей
+                # Всё, что дальше — игнорируем
                 continue
                 
     return final_filtered_hb

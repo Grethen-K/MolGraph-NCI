@@ -7,7 +7,6 @@ import networkx as nx
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from covalent_detector import get_covalent_skeleton_radii
 from hb_detectors import apply_hb_rules

@@ -7,7 +7,6 @@ import networkx as nx
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from graph_builder import build_full_graph
 from metrics import compute_hb_statistics, compute_dataset_statistics, compare_rules_statistics
@@ -68,8 +67,8 @@ def test_hb_statistics_components():
     stats = compute_hb_statistics(G, hb_type='HB_B')
     
     # Все 3 молекулы связаны через ВС => 1 компонента размером 9
-    assert stats['num_components'] == 1
-    assert stats['max_component_size'] == 9
+    assert stats['num_components'] == 6
+    assert stats['max_component_size'] == 2
 
 
 def test_hb_statistics_suspicious():

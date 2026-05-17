@@ -21,6 +21,8 @@ def compute_distance_matrix(coords):
         Матрица попарных расстояний (симметричная, диагональ = 0).
     """
     coords = np.asarray(coords, dtype=float)
+    if coords.size == 0:
+        return np.zeros((0, 0), dtype=float)
     if coords.ndim != 2 or coords.shape[1] != 3:
         raise ValueError("coords must have shape (N, 3)")
     return cdist(coords, coords, metric='euclidean')

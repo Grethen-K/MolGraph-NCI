@@ -8,7 +8,6 @@ import networkx as nx
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from graph_builder import build_full_graph, to_pyg_data, get_hb_subgraph
 
@@ -18,7 +17,7 @@ ATOMS = ['O', 'H', 'H']
 COORDS = [[0.0, 0.0, 0.0], [0.96, 0.0, 0.0], [-0.24, 0.93, 0.0]]
 COVALENT_EDGES = [(0, 1), (0, 2)]
 NCI_EDGES = [
-    {'i': 1, 'j': 0, 'type': 'HB_B', 'distance': 1.8, 'angle': 150.0}
+    {'i': 1, 'j': 2, 'type': 'HB_B', 'distance': 1.8, 'angle': 150.0}
 ]
 
 

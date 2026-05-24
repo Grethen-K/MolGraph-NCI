@@ -58,23 +58,20 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
         Каждый элемент: (H_idx, A_idx, dist, angle, H_sym, A_sym, edge_type, is_intermolecular)
     """
     coords = np.asarray(coords, dtype=float)
+    
+    default_donors = ['O', 'N', 'S', 'C', 'B', 'Si', 'P', 'As', 'Se']  # широкий список для демонстрации
+    default_acceptors = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I']
 
     # Настройки по правилу
     if rule == 'A':
         d_max = 3.25
         a_min = 0
-        default_donors = ['O', 'N', 'S', 'C']  # широкий список для демонстрации
-        default_acceptors = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I']
     elif rule == 'B':
         d_max = 'vdw_sum'
-        a_min = 130
-        default_donors = ['O', 'N']
-        default_acceptors = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I']
+        a_min = 130   #по июпак можно опустить до 110 
     elif rule == 'C':
-        d_max = 'vdw_sum_minus_0.2'
+        d_max = 'vdw_sum_minus_0.2'   #проверить от 0,1 до 0,25
         a_min = 150
-        default_donors = ['O', 'N']
-        default_acceptors = ['O', 'N', 'F']
     else:
         return []
 

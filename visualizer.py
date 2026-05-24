@@ -1,9 +1,9 @@
-# ============================================================
+# ====================================================================
 # visualizer.py — Interactive 3D molecular graph visualization using Plotly.
 # Replaces/extends matplotlib-based visualization with interactive Plotly graphs.
 # Compatible with MolGraph-NCI project structure.
 # Requires: plotly>=5.0.0, networkx, numpy
-# ============================================================
+# ====================================================================
 
 import numpy as np
 import networkx as nx
@@ -1189,7 +1189,6 @@ def get_hb_subgraph(G):
     edges = [(u, v) for u, v, d in G.edges(data=True)
              if d.get('type', '').startswith('HB_')]
     return G.edge_subgraph(edges).copy() if edges else nx.Graph()
-
 
 
 if __name__ == "__main__":

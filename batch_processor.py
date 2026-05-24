@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 
 from io_utils import read_raw_xyz
-from covalent_engine import get_covalent_skeleton
+# from covalent_engine import get_covalent_skeleton  # requires RDKit  # requires RDKit
 from covalent_detector import get_covalent_skeleton_combined
 from fragment_detector import assign_fragment_ids_to_graph, detect_fragments
 from hb_detectors import apply_hb_rules

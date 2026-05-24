@@ -26,13 +26,13 @@ def apply_sigma_rules(G, atoms, coords, vdw_radii, rule='A'):
     
     Критерии:
     Угол 1 (R1-X...A): стремится к 180 градусам (соосность).
-    Угол 2 (X...A-R2): характеризует направление атаки на акцептор.
+    Угол 2 (X...A-R2): стремится к 90 градусам для XB, и только для них, тк ChB & PnB нет этих углов.
     """
     all_found = []
     acceptors = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I', 'P', 'As', 'Se']
-    sigma_donors = ['F', 'Cl', 'Br', 'I', 'S', 'Se', 'Te', 'P', 'As', 'Sb']
+    sigma_donors = ['F', 'Cl', 'Br', 'I', 'At', 'O', 'S', 'Se', 'Te', 'N', 'P', 'As', 'Sb', 'Bi']
     
-    # Исключение внутренних контактов до 1-5 включительно
+    # Исключение внутренних контактов до 1-5 включительно   # варьировать от 3 до 5
     max_covalent_dist = 4 
 
     for i, atom in enumerate(atoms):
@@ -95,7 +95,7 @@ def apply_sigma_rules(G, atoms, coords, vdw_radii, rule='A'):
     if not all_found:
         return []
 
-    # Группировка и фильтрация по дистанции (порог 20%)
+    # Группировка и фильтрация по дистанции (порог 20%) # Варьировать от 15 до 30
     by_donor = defaultdict(list)
     for res in all_found:
         by_donor[res[0]].append(res)
@@ -104,7 +104,7 @@ def apply_sigma_rules(G, atoms, coords, vdw_radii, rule='A'):
     for d_idx in by_donor:
         interactions = sorted(by_donor[d_idx], key=lambda x: x[2])
         min_dist = interactions[0][2]
-        threshold = min_dist * 1.20
+        threshold = min_dist * 1.20   # Варьировать от 1,15 до 1,30
         
         for inter in interactions:
             if inter[2] <= threshold:

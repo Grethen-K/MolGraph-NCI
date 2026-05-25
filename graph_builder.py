@@ -1,12 +1,11 @@
 # ============================================================
-# 4. graph_builder.py
-#Построение полного графа G=(V,E) с типами рёбер.
-#Объединяет ковалентные рёбра и NCI-рёбра (HB, sigma).
-#Формирует node features и экспортирует в различные форматы.
+# graph_builder.py
+# Построение полного графа G=(V,E) с типами рёбер.
+# Объединяет ковалентные рёбра и NCI-рёбра (HB, sigma).
+# Формирует node features и экспортирует в различные форматы.
 # ============================================================
 import numpy as np
 import networkx as nx
-
 
 def build_full_graph(atoms, coords, covalent_edges, nci_edges,
                      fragment_ids=None, atomic_nums=None):
@@ -40,7 +39,7 @@ def build_full_graph(atoms, coords, covalent_edges, nci_edges,
     coords = np.asarray(coords, dtype=float)
     n = len(atoms)
 
-    # Стандартные атомные номера (DOPOLNIT'!!!!)
+    # FIX #5: Добавлены лантаноиды (Z=58-71)
     if atomic_nums is None:
         atomic_nums = {
             'H': 1, 'He': 2, 'Li': 3, 'Be': 4, 'B': 5, 'C': 6, 'N': 7, 'O': 8,
@@ -51,6 +50,9 @@ def build_full_graph(atoms, coords, covalent_edges, nci_edges,
             'Rb': 37, 'Sr': 38, 'Y': 39, 'Zr': 40, 'Nb': 41, 'Mo': 42, 'Tc': 43,
             'Ru': 44, 'Rh': 45, 'Pd': 46, 'Ag': 47, 'Cd': 48, 'In': 49, 'Sn': 50,
             'Sb': 51, 'Te': 52, 'I': 53, 'Xe': 54, 'Cs': 55, 'Ba': 56, 'La': 57,
+            'Ce': 58, 'Pr': 59, 'Nd': 60, 'Pm': 61, 'Sm': 62, 'Eu': 63,
+            'Gd': 64, 'Tb': 65, 'Dy': 66, 'Ho': 67, 'Er': 68, 'Tm': 69,
+            'Yb': 70, 'Lu': 71,
             'Hf': 72, 'Ta': 73, 'W': 74, 'Re': 75, 'Os': 76, 'Ir': 77, 'Pt': 78,
             'Au': 79, 'Hg': 80, 'Tl': 81, 'Pb': 82, 'Bi': 83, 'Po': 84, 'At': 85
         }
@@ -94,7 +96,6 @@ def build_full_graph(atoms, coords, covalent_edges, nci_edges,
 
     return G, result
 
-
 def _to_edge_index(G):
     """
     Формат edge_index как в PyTorch Geometric: [2, num_edges].
@@ -103,7 +104,6 @@ def _to_edge_index(G):
     for u, v, data in G.edges(data=True):
         edges.append([u, v])
     return np.array(edges, dtype=int).T if edges else np.zeros((2, 0), dtype=int)
-
 
 def _to_adjacency_matrix(G, n):
     """
@@ -115,7 +115,6 @@ def _to_adjacency_matrix(G, n):
         adj[v, u] = 1
     return adj
 
-
 def _to_edge_list(G):
     """
     Список рёбер [i, j, type].
@@ -124,7 +123,6 @@ def _to_edge_list(G):
     for u, v, data in G.edges(data=True):
         edges.append([u, v, data.get('type', 'unknown')])
     return edges
-
 
 def _extract_node_features(G, n):
     """
@@ -140,7 +138,6 @@ def _extract_node_features(G, n):
         ]
         features.append(feat)
     return np.array(features, dtype=float)
-
 
 def to_pyg_data(G, n):
     """
@@ -170,14 +167,12 @@ def to_pyg_data(G, n):
     except ImportError:
         return None
 
-
 def get_subgraph_by_type(G, edge_type):
     """
     Возвращает подграф, содержащий только рёбра заданного типа.
     """
     edges = [(u, v) for u, v, d in G.edges(data=True) if d.get('type') == edge_type]
     return G.edge_subgraph(edges).copy()
-
 
 def get_hb_subgraph(G):
     """

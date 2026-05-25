@@ -1,11 +1,9 @@
 # ============================================================
-# 5. metrics.py metrics.py
-#Метрики корректности и статистики по графу (раздел 6.1 ТЗ).
+# metrics.py  Метрики корректности и статистики по графу.
 # ============================================================
 import numpy as np
 import networkx as nx
 from collections import Counter
-
 
 def compute_hb_statistics(G_full, hb_type='all'):
     """
@@ -98,7 +96,6 @@ def compute_hb_statistics(G_full, hb_type='all'):
         'num_suspicious': len(suspicious)
     }
 
-
 def compute_sigma_statistics(G_full, sigma_type='all'):
     """
     Статистика по сигма-дырочным взаимодействиям.
@@ -122,6 +119,7 @@ def compute_sigma_statistics(G_full, sigma_type='all'):
     angles_1 = [d.get('angle_1', 0.0) for u, v, d in sigma_edges]
     angles_2 = [d.get('angle_2', 0.0) for u, v, d in sigma_edges]
 
+    # Переименованы ключи с hb на sigma
     return {
         'num_sigma': num_sigma,
         'avg_distance': np.mean(distances) if distances else 0.0,
@@ -131,10 +129,9 @@ def compute_sigma_statistics(G_full, sigma_type='all'):
         'min_angle_1': min(angles_1) if angles_1 else 0.0,
         'max_angle_1': max(angles_1) if angles_1 else 0.0,
         'avg_angle_2': np.mean(angles_2) if angles_2 else 0.0,
-        'avg_hb_per_donor': np.mean(list(donor_counts.values())) if donor_counts else 0.0,
-        'avg_hb_per_acceptor': np.mean(list(acceptor_counts.values())) if acceptor_counts else 0.0,
+        'avg_sigma_per_donor': np.mean(list(donor_counts.values())) if donor_counts else 0.0,
+        'avg_sigma_per_acceptor': np.mean(list(acceptor_counts.values())) if acceptor_counts else 0.0,
     }
-
 
 def compute_dataset_statistics(results_list):
     """
@@ -168,7 +165,6 @@ def compute_dataset_statistics(results_list):
         'total_suspicious': sum(r['num_suspicious'] for r in results_list),
     }
 
-
 def compare_rules_statistics(results_A, results_B, results_C):
     """
     Сравнивает метрики для трёх правил A/B/C на одном наборе структур.
@@ -193,4 +189,3 @@ def compare_rules_statistics(results_A, results_B, results_C):
             'extra_hb_A_vs_B': stats_A.get('avg_hb_per_structure', 0) - stats_B.get('avg_hb_per_structure', 0),
         }
     }
-

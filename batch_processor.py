@@ -1,6 +1,5 @@
 # ============================================================
-# 8. batch_processor.py Обработка набора XYZ-файлов: batch processing, сравнение правил,
-#сохранение результатов.
+# batch_processor.py Обработка набора XYZ-файлов: batch processing, сравнение правил, сохранение результатов.
 # ============================================================
 import os
 import json
@@ -9,8 +8,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 
 from io_utils import read_raw_xyz
-# from covalent_engine import get_covalent_skeleton  # requires RDKit  # requires RDKit
-from covalent_detector import get_covalent_skeleton_combined
+from covalent_detector import get_covalent_skeleton_combined, get_covalent_skeleton_radii
 from fragment_detector import assign_fragment_ids_to_graph, detect_fragments
 from hb_detectors import apply_hb_rules
 from sigma_detectors import apply_sigma_rules
@@ -21,12 +19,12 @@ from distance_matrix import compute_distance_matrix
 
 
 def process_single_structure(xyz_path, rules=('A', 'B', 'C'),
-                              inter_types=('HB', 'sigma'),
-                              use_radii_fallback=True,
-                              covalent_radii=None,
-                              vdw_radii=None,
-                              compute_noise=False,
-                              noise_sigmas=(0.01, 0.02, 0.03, 0.04, 0.05)):
+                             inter_types=('HB', 'sigma'),
+                             use_radii_fallback=True,
+                             covalent_radii=None,
+                             vdw_radii=None,
+                             compute_noise=False,
+                             noise_sigmas=(0.01, 0.02, 0.03, 0.04, 0.05)):
     """
     Обрабатывает одну XYZ-структуру для всех правил и типов взаимодействий.
 
@@ -57,20 +55,22 @@ def process_single_structure(xyz_path, rules=('A', 'B', 'C'),
     coords_arr = np.array(coords, dtype=float)
 
     # Ковалентный скелет
+    # FIX #1: Убран неработающий xyz2mol_func, используем только радиусный метод
+    # FIX #2: Добавлен импорт get_covalent_skeleton_radii
     if use_radii_fallback and covalent_radii is not None:
-        try:
-            G_cov, dist_mat, method = get_covalent_skeleton_combined(
-                atoms, coords, covalent_radii,
-                xyz2mol_func=lambda c, a, ch: get_covalent_skeleton(xyz_path),
-                charge=0
-            )
-        except Exception:
-            G_cov, dist_mat = get_covalent_skeleton_radii(atoms, coords, covalent_radii)
-            method = 'radii'
+        G_cov, dist_mat = get_covalent_skeleton_radii(
+            atoms, coords, covalent_radii,
+            scale=1.15, tolerance=0.0
+        )
+        method = 'radii'
     else:
-        G_cov, coords_out = get_covalent_skeleton(xyz_path)
-        dist_mat = compute_distance_matrix(coords_out)
-        method = 'xyz2mol'
+        # Если xyz2mol доступен, можно добавить здесь логику
+        # Пока используем радиусный метод как единственный надежный
+        G_cov, dist_mat = get_covalent_skeleton_radii(
+            atoms, coords, covalent_radii,
+            scale=1.15, tolerance=0.0
+        )
+        method = 'radii'
 
     # Фрагменты
     G_cov, num_frags = assign_fragment_ids_to_graph(G_cov)
@@ -146,16 +146,17 @@ def process_single_structure(xyz_path, rules=('A', 'B', 'C'),
 
     # Устойчивость к шуму (только для правила B HB)
     if compute_noise and 'B' in results['rules'] and 'HB' in results['rules']['B']:
-        def build_graph_for_noise(at, co):
-            # Упрощённая функция для noise_stability
+        # FIX #11: Передаем G_cov явно, а не через замыкание
+        def build_graph_for_noise(at, co, G_cov_ref=G_cov, covalent_edges_ref=covalent_edges,
+                                   fragment_ids_ref=fragment_ids, vdw_radii_ref=vdw_radii):
             nci = apply_hb_rules(
-                G_cov, at, np.array(co), vdw_radii or {},
+                G_cov_ref, at, np.array(co), vdw_radii_ref or {},
                 rule='B', interaction_type='HB'
             )
             nci_edges = [{'i': hb[0], 'j': hb[1], 'type': 'HB_B',
                           'distance': hb[2], 'angle': hb[3]} for hb in nci]
-            G, _ = build_full_graph(at, np.array(co), covalent_edges, nci_edges,
-                                     fragment_ids=fragment_ids)
+            G, _ = build_full_graph(at, np.array(co), covalent_edges_ref, nci_edges,
+                                    fragment_ids=fragment_ids_ref)
             return G, None
 
         noise_result = evaluate_noise_stability(
@@ -168,12 +169,12 @@ def process_single_structure(xyz_path, rules=('A', 'B', 'C'),
 
 
 def process_dataset(xyz_dir, output_dir='results',
-                     rules=('A', 'B', 'C'),
-                     inter_types=('HB', 'sigma'),
-                     covalent_radii=None,
-                     vdw_radii=None,
-                     compute_noise=False,
-                     n_workers=1):
+                    rules=('A', 'B', 'C'),
+                    inter_types=('HB', 'sigma'),
+                    covalent_radii=None,
+                    vdw_radii=None,
+                    compute_noise=False,
+                    n_workers=1):
     """
     Обрабатывает все XYZ-файлы в директории.
 
@@ -285,7 +286,7 @@ def _save_results(all_results, output_dir, rules, inter_types):
                             stats.get('num_suspicious', 0)
                         ]
                     writer.writerow(row)
-        print(f"Saved summary CSV to {csv_path}")
+            print(f"Saved summary CSV to {csv_path}")
 
     # Сравнительная статистика A/B/C
     for inter_type in inter_types:

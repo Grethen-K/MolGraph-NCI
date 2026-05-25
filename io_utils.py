@@ -5,7 +5,11 @@ def load_radii(filename):
     """Грузим радиусы."""
     path = os.path.join('data', filename)
     if not os.path.exists(path):
-        raise FileNotFoundError(f"Blyat! Где файл {path}?")
+        # Сообщение в случае ошибки
+        raise FileNotFoundError(
+            f"Required data file not found: {path}. "
+            f"Please ensure '{filename}' exists in the 'data/' directory."
+        )
     with open(path, 'r') as f:
         return json.load(f)
 

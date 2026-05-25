@@ -1,13 +1,9 @@
 # ============================================================
-# 10. UPDATED hb_detectors.py
-#hb_detectors.py (ОБНОВЛЁННЫЙ)
-#Детекторы водородных связей с проверкой типа донора,
-#параметризацией и возвратом типа ребра.
+# # hb_detectors.py  Детекторы водородных связей с проверкой типа донора, параметризацией и возвратом типа ребра.
 # ============================================================
 import numpy as np
 import networkx as nx
 from collections import defaultdict
-
 
 def calculate_angle(p1, p2, p3):
     """Считаем угол D-H...A."""
@@ -19,11 +15,10 @@ def calculate_angle(p1, p2, p3):
     res = np.degrees(np.arccos(np.clip(np.dot(v1, v2) / norm, -1.0, 1.0)))
     return res
 
-
 def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
                    donor_elements=None, acceptor_elements=None,
                    max_covalent_dist=4, return_edge_type=True,
-                   check_donor_type=True):
+                   check_donor_type=True, include_weak_donors=False):
     """
     Ищем водородные связи с улучшенной логикой.
 
@@ -51,6 +46,8 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
         Возвращать ли тип ребра ('HB_A', 'HB_B', 'HB_C').
     check_donor_type : bool
         Проверять ли тип донора X (O, N и т.д.).
+    include_weak_donors : bool
+        Включать ли слабые доноры (C, B, Si, P, As, Se) в дополнение к O, N, S.
 
     Returns
     -------
@@ -58,8 +55,10 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
         Каждый элемент: (H_idx, A_idx, dist, angle, H_sym, A_sym, edge_type, is_intermolecular)
     """
     coords = np.asarray(coords, dtype=float)
-    
-    default_donors = ['O', 'N', 'S', 'C', 'B', 'Si', 'P', 'As', 'Se']  # широкий список для демонстрации
+
+    # FIX #4: Разделены стандартные и слабые доноры
+    standard_donors = ['O', 'N', 'S']
+    weak_donors = ['C', 'B', 'Si', 'P', 'As', 'Se']
     default_acceptors = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I']
 
     # Настройки по правилу
@@ -68,14 +67,21 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
         a_min = 0
     elif rule == 'B':
         d_max = 'vdw_sum'
-        a_min = 130   #по июпак можно опустить до 110 
+        a_min = 130  # по IUPAC можно опустить до 110
     elif rule == 'C':
-        d_max = 'vdw_sum_minus_0.2'   #проверить от 0,1 до 0,25
+        d_max = 'vdw_sum_minus_0.2'  # проверить от 0,1 до 0,25
         a_min = 150
     else:
         return []
 
-    donors = donor_elements if donor_elements is not None else default_donors
+    # Формируем список доноров
+    if donor_elements is not None:
+        donors = donor_elements
+    else:
+        donors = standard_donors[:]
+        if include_weak_donors:
+            donors.extend(weak_donors)
+
     acceptors = acceptor_elements if acceptor_elements is not None else default_acceptors
 
     # Определяем фрагменты для проверки межмолекулярности
@@ -88,11 +94,22 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
         if interaction_type == 'HB' and atom != 'H':
             continue
 
-        # Находим ковалентного соседа (донор X)
+        # FIX #3: Находим ВСЕХ ковалентных соседей и выбираем правильного донора
         neighbors = list(G.neighbors(i))
         if not neighbors:
             continue
-        d_idx = neighbors[0]
+
+        # Выбираем соседа, который является валидным донором
+        valid_donors = []
+        for n_idx in neighbors:
+            if atoms[n_idx] in donors:
+                valid_donors.append(n_idx)
+
+        if not valid_donors:
+            continue
+
+        # Если несколько валидных доноров — берем первого (редкий случай)
+        d_idx = valid_donors[0]
         donor_element = atoms[d_idx]
 
         # Проверка типа донора

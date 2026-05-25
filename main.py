@@ -132,21 +132,20 @@ def main_single(xyz_file, rule='B', inter_type='HB',
         print(f"  Max component size: {stats['max_component_size']}")
         print(f"  Suspicious contacts: {stats['num_suspicious']}")
 
-    # ВЫВОД КОНКРЕТНЫХ СВЯЗЕЙ (нумерация с 1!)
-    if inter_type == 'HB':
-        print(f"\nH-bond details (1-based indexing):")
+    # ВЫВОД КОНКРЕТНЫХ СВЯЗЕЙ (+ 0-based индексация → нумерация с 1!)
+        print(f"\nH-bond details (1-based indexing, 0-based in brackets):")
         for u, v, d in G_full.edges(data=True):
             if d.get('type', '').startswith('HB_'):
-                print(f"  {G_full.nodes[u]['element']}{u+1} --- "
-                      f"{G_full.nodes[v]['element']}{v+1}  "
+                print(f" {G_full.nodes[u]['element']}{u+1}(0:{u}) --- "
+                      f"{G_full.nodes[v]['element']}{v+1}(0:{v}) "
                       f"(dist={d.get('distance',0):.3f}A, "
                       f"angle={d.get('angle',0):.1f}deg)")
     elif inter_type == 'sigma':
-        print(f"\nSigma-bond details (1-based indexing):")
+        print(f"\nSigma-bond details (1-based indexing, 0-based in brackets):")
         for u, v, d in G_full.edges(data=True):
             if d.get('type', '').startswith('sigma_'):
-                print(f"  {G_full.nodes[u]['element']}{u+1} --- "
-                      f"{G_full.nodes[v]['element']}{v+1}  "
+                print(f" {G_full.nodes[u]['element']}{u+1}(0:{u}) --- "
+                      f"{G_full.nodes[v]['element']}{v+1}(0:{v}) "
                       f"(dist={d.get('distance',0):.3f}A, "
                       f"angle1={d.get('angle_1',0):.1f}deg)")
 
@@ -291,6 +290,9 @@ def main():
                         help='Number of parallel workers (batch mode)')
 
     args = parser.parse_args()
+
+    if args.input and not os.path.exists(args.input):
+        parser.error(f"Input path does not exist: {args.input}")
 
     if not args.input:
         args.input = os.path.join(os.path.dirname(__file__), 'test')

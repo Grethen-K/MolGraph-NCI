@@ -56,7 +56,7 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
     """
     coords = np.asarray(coords, dtype=float)
 
-    # FIX #4: Разделены стандартные и слабые доноры
+    #Разделены стандартные и слабые доноры
     standard_donors = ['O', 'N', 'S']
     weak_donors = ['C', 'B', 'Si', 'P', 'As', 'Se']
     default_acceptors = ['O', 'N', 'F', 'S', 'Cl', 'Br', 'I']
@@ -67,7 +67,7 @@ def apply_hb_rules(G, atoms, coords, vdw_radii, rule='B', interaction_type='HB',
         a_min = 0
     elif rule == 'B':
         d_max = 'vdw_sum'
-        a_min = 130  # по IUPAC можно опустить до 110
+        a_min = 120  # по IUPAC можно опустить до 110
     elif rule == 'C':
         d_max = 'vdw_sum_minus_0.2'  # проверить от 0,1 до 0,25
         a_min = 150

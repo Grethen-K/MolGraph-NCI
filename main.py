@@ -53,8 +53,9 @@ def build_graph_for_structure(atoms, coords, covalent_radii, vdw_radii,
     # NCI
     if inter_type == 'HB':
         nci_raw = apply_hb_rules(
-            G_cov, atoms, coords_arr, vdw_radii,
-            rule=rule, interaction_type='HB'
+        G_cov, atoms, coords_arr, vdw_radii,
+        rule=rule, interaction_type='HB',
+        include_weak_donors=True 
         )
         nci_edges = []
         for hb in nci_raw:

@@ -1,9 +1,9 @@
-# ====================================================================
+# ============================================================
 # visualizer.py — Interactive 3D molecular graph visualization using Plotly.
 # Replaces/extends matplotlib-based visualization with interactive Plotly graphs.
 # Compatible with MolGraph-NCI project structure.
 # Requires: plotly>=5.0.0, networkx, numpy
-# ====================================================================
+# ============================================================
 
 import numpy as np
 import networkx as nx
@@ -134,18 +134,6 @@ def _get_z_from_element(element):
 def reconstruct_graph_from_json(data):
     """
     Reconstruct a NetworkX graph from the JSON output saved by main.py.
-
-    The JSON format from main.py:
-    {
-        'filename': str,
-        'num_atoms': int,
-        'rule': str,
-        'interaction_type': str,
-        'statistics': dict,
-        'edge_list': [[i, j, type], ...],
-        'edge_index': [[u, v], ...] or [[2, N], ...],
-        'node_features': [[atomic_num, fragment_id, x, y, z], ...]
-    }
     """
     G = nx.Graph()
 
@@ -233,6 +221,34 @@ def visualize_structure_plotly(G_full, title="Molecular Graph with NCI",
 
         style = _get_edge_style(etype, is_suspicious)
 
+        # FIX: Properly format distance and angle for hover text
+        dist_val = d.get('distance', None)
+        angle_val = d.get('angle', None)
+        if isinstance(dist_val, (int, float)):
+            dist_str = f"{dist_val:.3f}"
+        else:
+            dist_str = "N/A"
+        if isinstance(angle_val, (int, float)):
+            angle_str = f"{angle_val:.1f}"
+        else:
+            angle_str = "N/A"
+
+        if not is_suspicious:
+            hover_text = (
+                f"Edge: {elements.get(u, '?')}{u} — {elements.get(v, '?')}{v}<br>"
+                f"Type: {etype}<br>"
+                f"Distance: {dist_str} Å<br>"
+                f"Angle: {angle_str}°"
+            )
+        else:
+            hover_text = (
+                f"⚠️ SUSPICIOUS<br>"
+                f"Edge: {elements.get(u, '?')}{u} — {elements.get(v, '?')}{v}<br>"
+                f"Type: {etype}<br>"
+                f"Distance: {dist_str} Å<br>"
+                f"Angle: {angle_str}°"
+            )
+
         trace = go.Scatter3d(
             x=[x0, x1, None],
             y=[y0, y1, None],
@@ -245,18 +261,7 @@ def visualize_structure_plotly(G_full, title="Molecular Graph with NCI",
             ),
             opacity=style['opacity'],
             hoverinfo='text',
-            hovertext=(
-                f"Edge: {elements.get(u, '?')}{u} — {elements.get(v, '?')}{v}<br>"
-                f"Type: {etype}<br>"
-                f"Distance: {d.get('distance', 'N/A'):.3f} Å<br>"
-                f"Angle: {d.get('angle', 'N/A'):.1f}°"
-                if not is_suspicious else
-                f"⚠️ SUSPICIOUS<br>"
-                f"Edge: {elements.get(u, '?')}{u} — {elements.get(v, '?')}{v}<br>"
-                f"Type: {etype}<br>"
-                f"Distance: {d.get('distance', 'N/A'):.3f} Å<br>"
-                f"Angle: {d.get('angle', 'N/A'):.1f}°"
-            ),
+            hovertext=hover_text,
             showlegend=False,
             name=etype
         )
